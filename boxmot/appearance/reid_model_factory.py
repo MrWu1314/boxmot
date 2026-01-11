@@ -145,9 +145,9 @@ def get_model_url(model):
 def load_pretrained_weights(model, weight_path):
     """Loads pretrained weights to a model."""
     if not torch.cuda.is_available():
-        checkpoint = torch.load(weight_path, map_location=torch.device("cpu"))
+        checkpoint = torch.load(weight_path, map_location=torch.device("cpu"), encoding='latin1')
     else:
-        checkpoint = torch.load(weight_path)
+        checkpoint = torch.load(weight_path, encoding='latin1')
 
     if "state_dict" in checkpoint:
         state_dict = checkpoint["state_dict"]

@@ -173,9 +173,24 @@ class BotSort(BaseTracker):
 
         if self.with_reid:
             emb_dists = embedding_distance(strack_pool, detections) / 2.0
+            emb_dists_backup = emb_dists.copy()
+            # print("ious_dists is:", ious_dists)
+            # print("emb_dists is:", emb_dists)
             emb_dists[emb_dists > self.appearance_thresh] = 1.0
             emb_dists[ious_dists_mask] = 1.0
-            dists = np.minimum(ious_dists, emb_dists)
+            #dists = np.minimum(ious_dists, emb_dists)
+
+            # 设置位置距离和外观特征距离都很小才能匹配的条件
+            iou_condition = ious_dists < self.proximity_thresh  # IOU 小于阈值
+            emb_condition = emb_dists < self.appearance_thresh  # 外观距离小于阈值
+
+            # 使用逻辑与（&）操作，将两个条件同时满足作为匹配标准
+            valid_dists_mask = iou_condition & emb_condition
+
+            # 如果两个条件都满足（位置和外观都足够匹配），则选取较小的距离，否则设置为一个很大的值
+            dists = np.where(valid_dists_mask, np.minimum(ious_dists, emb_dists), 1.0)
+            emb_dists_mask = emb_dists_backup < 0.1
+            dists[emb_dists_mask] = emb_dists_backup[emb_dists_mask]  # 当 emb_dists < 0.1 时，选择 emb_dists 的值
         else:
             dists = ious_dists
 
